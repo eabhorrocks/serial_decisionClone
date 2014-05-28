@@ -49,4 +49,6 @@ The BIBTEX entry for this is::
     journal = {Journal of Vision} 
     }
 
-All data have been preprocessed and are provided as a python pickle.
+These data are provided as a matrix with colums
+block condition stimulus target response
+that can used by the ColumnData class.
