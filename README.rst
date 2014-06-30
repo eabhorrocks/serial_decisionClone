@@ -16,7 +16,7 @@ This code reproduces the analyses in the paper
 
     Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
-Please also see the accompanying [wiki](https://bitbucket.org/mackelab/serial_decision/wiki/) which also includes an (editable) list of references on serial dependence.
+Please also see the accompanying `wiki <https://bitbucket.org/mackelab/serial_decision/wiki/>`_ which also includes an (editable) list of references on serial dependence.
 
 See https://bitbucket.org/mackelab/home for more repositories by the group.
 
