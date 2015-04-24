@@ -1,3 +1,5 @@
+**More information at [www.mackelab.org](www.mackelab.org)**
+
 This repository contains code to reproduce the analyses in
 
 Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
