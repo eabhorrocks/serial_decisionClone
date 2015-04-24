@@ -1,4 +1,4 @@
-**More information at [www.mackelab.org](www.mackelab.org)**
+**More information at www.mackelab.org**
 
 This repository contains code to reproduce the analyses in
 
