@@ -18,11 +18,11 @@ needed for bootstrap, the LikelihoodCollector returns only the log-likelihood an
 returns log-likelihood and slope. The latter two collectors will typically be used for the permutation tests.
 
 
-Copyright (C) 2014 Ingo Fründ
+Copyright (C) 2014 Ingo Fruend
 
 This code reproduces the analyses in the paper
 
-    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -287,6 +287,9 @@ def mcsimulation ( generator, collector, nsamples, w0, p0, nu0=0., verbose=False
     collected_output = []
     for i in xrange ( nsamples ):
         r, X = generator ()
+        # print(np.shape(r))
+        # print(np.shape(X))
+        
         M = model.history_model ( r, X, w0=w0, p0=p0, nu0=nu0, hf0=hf0,
                 applythreshold=applythreshold, emiter=80 )
         collected_output.append ( collector(M) )

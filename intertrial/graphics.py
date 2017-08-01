@@ -4,16 +4,17 @@ import pylab as pl
 import numpy as np
 from matplotlib.patches import Arc
 from matplotlib.ticker import MaxNLocator
+from matplotlib import gridspec
 from scipy import stats
 
 __doc__ = """Graphics commands that allow generating all plots in the canonical figure
 
 
-Copyright (C) 2014 Ingo Fründ
+Copyright (C) 2014 Ingo Fruend
 
 This code reproduces the analyses in the paper
 
-    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -40,12 +41,17 @@ class canonical_axes:
     def __init__ ( self, fig, bbox=(0,0,1,1) ):
         """Determine the general layout of the axes"""
         x0,y0,w,h = bbox
-        self.pmf               = fig.add_axes ( (x0+0.10*w, y0+0.60*h, 0.25*w, 0.3*h) )
-        self.uv                = fig.add_axes ( (x0+0.46*w, y0+0.60*h, 0.20*w, 0.3*h) )
-        self.likeli            = fig.add_axes ( (x0+0.77*w, y0+0.60*h, 0.20*w, 0.3*h) )
-        self.history_rz        = fig.add_axes ( (x0+0.10*w, y0+0.15*h, 0.25*w, 0.3*h) )
-        self.history_perf      = fig.add_axes ( (x0+0.46*w, y0+0.15*h, 0.20*w, 0.3*h) )
-        self.slopes            = fig.add_axes ( (x0+0.77*w, y0+0.15*h, 0.20*w, 0.3*h) )
+        gs = gridspec.GridSpec(3, 3)
+        self.pmf               = fig.add_subplot(gs[0,0])
+        self.uv                = fig.add_subplot(gs[0,1])
+        self.likeli            = fig.add_subplot(gs[0,2])
+        self.history_rz        = fig.add_subplot(gs[1,0])
+        self.history_perf      = fig.add_subplot(gs[1,1])
+        self.slopes            = fig.add_subplot(gs[1,2])
+        self.history_rzP       = fig.add_subplot(gs[2,0])
+        self.history_perfP     = fig.add_subplot(gs[2,1])
+        self.history_pupil     = fig.add_subplot(gs[2,2])
+        
 
 def prepare_axes ( ax, haveon=("bottom","left" ) ):
     """Prepare an axes object to look nicer than standard matplotlib
