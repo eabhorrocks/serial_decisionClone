@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: ascii -*-
+# -*- coding: utf-8 -*-
 
 __doc__ = """
-Copyright (C) 2014 Ingo Fruend
+Copyright (C) 2014 Ingo Fründ
 
 This code reproduces the analyses in the paper
 
-    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -31,7 +31,6 @@ import copy
 import logging
 logging.root.level = 10
 logging.BASIC_FORMAT = '%(message)s'
-
 
 ############################## Parsing command line
 
@@ -68,15 +67,18 @@ parser.add_option ( "-g", "--graphics-path",
         default="figures",
         help="path where the graphical output should be stored" )
 parser.add_option ( "-p", "--data-path",
-        default=os.path.expanduser("~/Data/pupilUncertainty_FigShare/Data/serialmodel/"),
+        default=os.path.join(os.getcwd(), "serialmodel"),
         help="path where the data output should be stored" )
 parser.add_option ( "-t", "--detection",
         action="store_true",
         help="detection experiment: fit the threshold nonlinearity" )
 parser.add_option ( "-e", "--header",
         action="store_true",
-        help="Does the data file contain a header? If you choose this option, the header will be ignored!" )     
-        
+        help="Does the data file contain a header? If you choose this option, the header will be ignored!" )
+parser.add_option ( "-m", "--matlab",
+        action="store_true",
+        help="Save files to Matlab" )
+
 opts,args = parser.parse_args ()
 
 ############################## Setting values in convenience module
@@ -90,33 +92,9 @@ data,w0,plotinfo = util.load_data_file ( args[0], header=opts.header, detection=
 # Check for directories
 if not os.path.exists (opts.data_path):
     os.mkdir (opts.data_path)
-    
-# write away the data and results to a matlab file for easier plotting
-logging.info ( "Writing data to mat file" )
-datadict = copy.copy(data)
-datadict = datadict.__dict__
-
-# remove fields that scipy io cant handle
-unwanted = [None]
-unwanted_keys = [k for k, v in datadict.items() if any([v is i for i in unwanted])]
-for k in unwanted_keys: del datadict[k]
-del datadict['rng'] # scipy cant handle this either
-
-# scipy will only save arrays that are in the dict, so convert the keys that are columndata
-datadict['p'] = datadict.pop('_ColumnData__p')
-datadict['data'] = datadict.pop('_ColumnData__data')
-datadict['blocks'] = datadict.pop('_ColumnData__blocks')
-datadict['X'] = datadict.pop('_ColumnData__X')
-datadict['fname'] = datadict.pop('_DataSet__fname')
-datadict['th_features'] = datadict.pop('_ColumnData__th_features')
-datadict['r'] = datadict.pop('_ColumnData__r')
-datadict['conditions'] = datadict.pop('_ColumnData__conditions')
-
-print(datadict.keys())
-results_file = os.path.join ( opts.data_path, os.path.basename(args[0])+"data.mat" )
-scipy.io.savemat(results_file, datadict)
 
 ############################## analyze data or read backup file
+
 logging.info ( "Searching for backup" )
 backup_file = os.path.join ( opts.data_path, os.path.basename(args[0])+".pcl" )
 
@@ -136,13 +114,5 @@ else:
 print results.keys()
 print "nu=",results['model_w_hist'].nu
 
-# write away the data and results to a matlab file for easier plotting
-logging.info ( "Writing results to mat file" )
-results_file = os.path.join ( opts.data_path, os.path.basename(args[0])+"results.mat" )
-
-# remove fields that scipy io cant handle
-unwanted = [None]
-unwanted_keys = [k for k, v in results.items() if any([v is i for i in unwanted])]
-for k in unwanted_keys: del results[k]
-# save
-scipy.io.savemat(results_file, results)
+if opts.matlab:
+    util.results2mat(data, results, opts)

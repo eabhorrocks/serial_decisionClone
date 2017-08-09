@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import threshold,glm
@@ -6,11 +7,11 @@ import sys
 
 __doc__ = """This function defines the actual history model and allows to fit this model to data.
 
-Copyright (C) 2014 Ingo Fruend
+Copyright (C) 2014 Ingo Fründ
 
 This code reproduces the analyses in the paper
 
-    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -105,14 +106,8 @@ class history_model ( object ):
         w0, p0, nu0 = history_model.__heuristics_for_start ( r, X, self.hf0, self.nafc )
         self.w = np.zeros ( X.shape[1], 'd' )
         w  = kwargs.setdefault ( 'w0', w0 )
-        
-        # in the modulation and 7 independent lags model, this goes wrong
-        try:
-            self.w[:len(w0)] = w0
-        except:
-            from IPython import embed
-            embed()    
-            
+        self.w[:len(w0)] = w0
+
         self.w0 = self.w.copy()
         self.pi = kwargs.setdefault ( 'p0', p0 )
         self.nu = kwargs.setdefault ( 'nu0', nu0 )
@@ -359,7 +354,7 @@ class history_model ( object ):
 
     def pcorrect ( self, x, pleft=0.5, pright=0.5, ind=[0,1] ):
         """Get probability of a correct response rather than probability of left/right response
-        
+
         :Parameters:
             *x*         stimulus intensities
             *pleft*     probability that the stimulus is on the left (or number of stimuli on the left)
@@ -389,7 +384,7 @@ class history_model ( object ):
         difficult, easy = performance_filter ( r, X, p, hf0=self.hf0 )
         assert np.shape(np.shape(difficult))[0] == 1 , 'difficult is not a vectors'
         assert np.shape(np.shape(easy))[0] == 1 , 'easy is not a vectors'
-        
+
         # AEU: get both output args from performance_filter
         #easy = np.logical_not ( difficult )
 
@@ -490,7 +485,7 @@ def performance_filter ( r, X, p1=0.75, p0=0.55, hf0=2 ):
     # check again
     assert np.shape(np.shape(difficult))[0] == 1 , 'difficult is not a vectors'
     assert np.shape(np.shape(easy))[0] == 1 , 'easy is not a vectors'
-   
+
     return difficult,easy
 
 if __name__ == "__main__":

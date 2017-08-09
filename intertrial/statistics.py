@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import scipy.optimize as opt
@@ -18,11 +19,11 @@ needed for bootstrap, the LikelihoodCollector returns only the log-likelihood an
 returns log-likelihood and slope. The latter two collectors will typically be used for the permutation tests.
 
 
-Copyright (C) 2014 Ingo Fruend
+Copyright (C) 2014 Ingo Fründ
 
 This code reproduces the analyses in the paper
 
-    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -119,7 +120,7 @@ def Likelihood_and_Slope_Collector (fitted_model):
     """Collect likelihood and slope
 
     The output will be (loglikelihood,w(stimulus),slope_of_the_full_model_at_inflection)
-    
+
     This assumes that the first two columns of the design matrix refer to the constant term and a term
     corresponding to the stimulus level
 
@@ -169,8 +170,8 @@ class EvaluationCollector ( object ):
         # out.append ( fitted_model.w[1:self.hf0] ) # 12,...,12+hf0
         out.append ( self.get_thres ( fitted_model.w[:self.hf0], fitted_model.nu, fitted_model.pi, .75 ) ) # 12,...,12+hf0
         out.append ( self.get_thres ( fitted_model.w[:self.hf0], fitted_model.nu, fitted_model.pi, .85 ) ) # 12+hf0,...,12+2*hf0
-        out.append ( fitted_model.nu ) # 
-        out.append ( fitted_model.w ) # 
+        out.append ( fitted_model.nu ) #
+        out.append ( fitted_model.w ) #
         out.append ( np.ravel ( self.stimuli ) )
         out.append ( np.ravel ( self.conditions ) )
         out.append ( np.ravel ( self.variance_explained ) )
@@ -250,7 +251,7 @@ class EvaluationCollector ( object ):
 
 #################### The real monte carlo stuff ####################
 
-def mcsimulation ( generator, collector, nsamples, w0, p0, nu0=0., verbose=False, hf0=2, applythreshold=[] ): 
+def mcsimulation ( generator, collector, nsamples, w0, p0, nu0=0., verbose=False, hf0=2, applythreshold=[] ):
     """run a monte carlo simulation
 
     :Parameters:
@@ -289,7 +290,7 @@ def mcsimulation ( generator, collector, nsamples, w0, p0, nu0=0., verbose=False
         r, X = generator ()
         # print(np.shape(r))
         # print(np.shape(X))
-        
+
         M = model.history_model ( r, X, w0=w0, p0=p0, nu0=nu0, hf0=hf0,
                 applythreshold=applythreshold, emiter=80 )
         collected_output.append ( collector(M) )

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import pylab as pl
 import numpy as np
@@ -10,11 +11,11 @@ from scipy import stats
 __doc__ = """Graphics commands that allow generating all plots in the canonical figure
 
 
-Copyright (C) 2014 Ingo Fruend
+Copyright (C) 2014 Ingo Fründ
 
 This code reproduces the analyses in the paper
 
-    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -51,7 +52,7 @@ class canonical_axes:
         self.history_rzP       = fig.add_subplot(gs[2,0])
         self.history_perfP     = fig.add_subplot(gs[2,1])
         self.history_pupil     = fig.add_subplot(gs[2,2])
-        
+
 
 def prepare_axes ( ax, haveon=("bottom","left" ) ):
     """Prepare an axes object to look nicer than standard matplotlib
@@ -343,7 +344,7 @@ def plot_pmf ( pi, dlal, x=None, ax=None, color='k', alpha=1. ):
 
 def plot_nonlinearity_summary ( data, w, pi, ax=None, color='k', label="" ):
     """Plot a data summary after inverting it through the psychometric function
-    
+
     :Example:
     >>> import monkey
     >>> d = pl.array ( zip ( [-2.,-1.,0.,1.,2.],[1,4,10,16,20],[20]*5 ) )

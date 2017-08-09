@@ -1,24 +1,24 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import pylab as pl
 import numpy as np
 import column # Data set specific
 import history,graphics,statistics,model # general
-import sys,cPickle
+import sys,cPickle,os
 from threshold import u_v
 import pdb # debugger
 import copy
-
 import glm
 
 __doc__ = """A number of very high level functions
 
 
-Copyright (C) 2014 Ingo Fruend
+Copyright (C) 2014 Ingo Fründ
 
 This code reproduces the analyses in the paper
 
-    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -295,7 +295,7 @@ def analysis ( d, w0, nsamples=200, perm_collector=statistics.EvaluationCollecto
     else:
         dwh = d
 
-    # return indices of difficult trials (p > 0.75) and difficult trials (p < 0.55)
+    # return indices of easy trials (p > 0.75) and difficult trials (p < 0.55)
     easy,difficult = d.performance_filter ()
     logging.info ( "Fitting models" )
 
@@ -533,23 +533,19 @@ def kernelplot ( d, results, infodict, ax1, ax2, legend='lower right' ):
     M = results['model_w_hist']
     bootstrap = results['bootstrap']
 
+    # hr = d.gethistorykernel ( M.w[d.hf0:d.hf0+d.hlen], al )
+    # hz = d.gethistorykernel ( M.w[d.hf0+d.hlen:],      al )
     C = statistics.Kernel_and_Slope_Collector ( d.h, d.hf0, range(1,d.hf0) )
-    K = C(M)
-    print 'K', K
     print d.hf0
-    nlags = d.h.shape[0]
-    print 'nlags = ', nlags
-
-    hr = K[:nlags]
-    hz = K[nlags:2*nlags]
-    # what is stored here?
-    hr *= K[-2]
+    K = C(M)
+    hr = K[:d.h.shape[0]]
+    hz = K[d.h.shape[0]:-2]
     hz *= K[-2]
-
+    hr *= K[-2]
     print "h_r[1]",hr[0]
     print "h_z[1]",hz[0]
 
-    if bootstrap is None:
+    if not bootstrap is None:
         kernellen = (bootstrap.shape[1]-2)/2
         print kernellen
         al = bootstrap[:,-2]
@@ -664,3 +660,41 @@ def same_y ( *axes ):
     for ax in axes:
         ax.set_ylim ( -yl, yl )
     return -.8*yl,.1*yl
+
+def results2mat(data, results, opts):
+    # write away the data and results to a matlab file for easier plotting
+    logging.info ( "Writing data to mat file" )
+    datadict = copy.copy(data)
+    datadict = datadict.__dict__
+
+    # remove fields that scipy io cant handle
+    unwanted = [None]
+    unwanted_keys = [k for k, v in datadict.items() if any([v is i for i in unwanted])]
+    for k in unwanted_keys: del datadict[k]
+    del datadict['rng'] # scipy cant handle this either
+
+    # scipy will only save arrays that are in the dict, so convert the keys that are columndata
+    datadict['p'] = datadict.pop('_ColumnData__p')
+    datadict['data'] = datadict.pop('_ColumnData__data')
+    datadict['blocks'] = datadict.pop('_ColumnData__blocks')
+    datadict['X'] = datadict.pop('_ColumnData__X')
+    datadict['fname'] = datadict.pop('_DataSet__fname')
+    datadict['th_features'] = datadict.pop('_ColumnData__th_features')
+    datadict['r'] = datadict.pop('_ColumnData__r')
+    datadict['conditions'] = datadict.pop('_ColumnData__conditions')
+
+    print(datadict.keys())
+    results_file = os.path.join ( opts.data_path, os.path.basename(args[0])+"data.mat" )
+    scipy.io.savemat(results_file, datadict)
+
+    # write away the data and results to a matlab file for easier plotting
+    logging.info ( "Writing results to mat file" )
+
+    # remove fields that scipy io cant handle
+    unwanted = [None]
+    unwanted_keys = [k for k, v in results.items() if any([v is i for i in unwanted])]
+    for k in unwanted_keys: del results[k]
+
+    # save
+    results_file = os.path.join ( opts.data_path, os.path.basename(args[0])+"results.mat" )
+    scipy.io.savemat(results_file, results)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import copy,sys
@@ -11,11 +12,11 @@ One of the central components of the DataSet class is its ability to generate ra
 of the original dataset or random resamples.
 
 
-Copyright (C) 2014 Ingo Fruend
+Copyright (C) 2014 Ingo Fründ
 
 This code reproduces the analyses in the paper
 
-    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -191,12 +192,6 @@ def gram_schmidt ( X ):
 
 #################### Dealing with history features ####################
 
-# sys.stderr.write ( "WARNING USING ONLY 1Back feature!\n" )
-# def history_impulses ( eta=[-1], nlags=7 ):
-
-# original
-# def history_impulses ( eta=[-1,0.5,0.25], nlags=7 ):
-
 # AEU: change this to independent lags
 # def history_impulses ( eta=[-1,-2,-3,-4,-5,-6,-7], nlags=7 ):
 def history_impulses ( eta=[-1,0.5,0.25], nlags=7 ):
@@ -278,6 +273,10 @@ def history_features ( h, r_or_z ):
 def history_features_stim (h, r_or_z, d):
     """Determine the values of a history feature
 
+    When the stimulus is 0, make this entry in the design matrix zero as well so that these trials don't
+    go into the stimulus weight. See Braun et al. http://www.biorxiv.org/content/early/2017/08/03/172049
+    section "Psychometric function fit with history contributions for stimulus and choice"
+    
     :Parameters:
         *d* Difficulty of each trial, if 0 there will be no stimulus weight assigned
         *h*
@@ -299,7 +298,7 @@ def history_features_stim (h, r_or_z, d):
     n,m = hf.shape
 
     for i in xrange ( m ):
-        # see slack message Anke 15 July 2017: when there is no stimulus evidence, also set this history feature to zero
+        # when there is no stimulus evidence, also set this history feature to zero
         for j in xrange ( len(r_or_z)):
             if d[j] == 0:
                 r_or_z[j] = 0

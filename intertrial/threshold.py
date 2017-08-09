@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import scipy.optimize as opt
@@ -8,11 +9,11 @@ import scipy.weave
 __doc__ = """Definitions for the threshold nonlinearity
 
 
-Copyright (C) 2014 Ingo Fruend
+Copyright (C) 2014 Ingo Fründ
 
 This code reproduces the analyses in the paper
 
-    Fruend, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
+    Fründ, Wichmann, Macke (2014): Quantifying the effect of inter-trial dependence on perceptual decisions. J Vis, 14(7): 9.
 
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -147,4 +148,3 @@ def optimize_nu ( X, y, q, w, nu0, applythreshold=[1], niter=10, stop=1e-5, long
         return - L ( gxw, y, q )
     nu_out = opt.fmin ( error, float ( nu0 ), disp=0 )
     return nu_out
-
