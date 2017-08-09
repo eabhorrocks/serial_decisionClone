@@ -23,7 +23,7 @@ import history
 import numpy as np
 
 class ColumnData ( history.DataSet ):
-    def __init__ ( self, data, impulse_responses=None, threshold=False, ground_truth=None, modulation=False, doublemodulation=False):
+    def __init__ ( self, data, impulse_responses=None, threshold=False, ground_truth=None):
         """A data set consisting of multiple columns of data
 
         :Parameters:
@@ -32,7 +32,7 @@ class ColumnData ( history.DataSet ):
                 block should be positive integers, condition, should be positive
                 integers, stimulus should be positive, target should have values of
                 0 and 1, response should have values of 0 and 1.
-                AEU: data can contain a 6th column, indicating a modulatory term
+                AEU: data can contain a 6th and 7th column, indicating modulatory terms
             *impulse_responses*
                 an array with the impulse responses of the history filters in the
                 columns. Such an array is most easily constructed using the function
@@ -92,8 +92,6 @@ class ColumnData ( history.DataSet ):
         self.__conditions = np.sort ( np.unique ( data[:,1] ) )
         self.__data       = data
         self.fname        = data
-        self.modulation   = modulation
-        self.doublemodulation   = doublemodulation
         self.__construct_design ( )
         self.__threshold  = threshold
         self.__th_features = []
@@ -113,53 +111,18 @@ class ColumnData ( history.DataSet ):
 
     def permutation ( self ):
 
-        if self.modulation:
-            """Permute only the pupil part"""
-            data = self.__data.copy()
-            for condition in self.__conditions:
-                cond_idx = data[:,1] == condition
-                these_data = data[cond_idx,-1] # get only the pupil values
-                np.random.shuffle(these_data)
-                data[cond_idx,-1] = these_data
+        """Return a conditionwise permutation of the original dataset"""
+        data = self.__data.copy()
+        for condition in self.__conditions:
+            cond_idx = data[:,1] == condition
+            these_data = data[cond_idx,1:] # get the data within a session, leave blocknrs intact
+            np.random.shuffle(these_data)
+            data[cond_idx,1:] = these_data
 
-            # then construct designM again
-            C = ColumnData ( data, self.h, self.__threshold, ground_truth=None, modulation=self.modulation )
-            return C.r,C.X
+        # after shuffling all trials within a block, recompute the designM
+        C = ColumnData ( data, self.h, self.__threshold, ground_truth=None)
 
-        elif self.doublemodulation:
-            """Permute both of the modulatory regressors independently of one another"""
-            data = self.__data.copy()
-            for condition in self.__conditions:
-                cond_idx = data[:,1] == condition
-                these_data = data[cond_idx,-2:] # get the pupil and RT values
-                np.random.shuffle(these_data)
-                data[cond_idx,-2:] = these_data
-
-            # then construct designM again
-            C = ColumnData ( data, self.h, self.__threshold, ground_truth=None, doublemodulation=self.doublemodulation )
-            return C.r,C.X
-
-        else:
-            """Return a conditionwise permutation of the original dataset"""
-
-            data = self.__data.copy()
-            for condition in self.__conditions:
-                cond_idx = data[:,1] == condition
-                these_data = data[cond_idx,1:] # get the data within a session, leave blocknrs intact
-                np.random.shuffle(these_data)
-                data[cond_idx,1:] = these_data
-
-            # for block in self.__blocks:
-            #    block_index = self.__data[:,0] == block
-            #    these_data  = self.__data[block_index,:]
-            #    np.random.shuffle ( these_data )
-            #    data[block_index,:] = these_data
-
-            # after shuffling all trials within a block, recompute the designM
-            # print((self.h))
-            C = ColumnData ( data, self.h, self.__threshold, ground_truth=None, modulation=self.modulation)
-
-            return C.r,C.X
+        return C.r,C.X
 
     @property
     def th_features ( self ):
@@ -190,10 +153,7 @@ class ColumnData ( history.DataSet ):
         return np.array ( out )
 
     def __construct_design ( self ):
-        """Construct the design matrix
-        # AEU: add another column for a modulatory weight
-        # contingent on having the -modulatory option in self
-        """
+        """Construct the design matrix"""
         x = []
         y = []
         p = []
@@ -209,13 +169,6 @@ class ColumnData ( history.DataSet ):
             z = these_data[:,3]
             r = these_data[:,4]
             d = these_data[:,2] # coherence levels
-
-            if self.modulation:
-                pupil = these_data[:,5] # modulatory
-            elif self.doublemodulation:
-                pupil = these_data[:,5] # modulatory 1, in this case pupil
-                reactiontime = these_data[:,6] # modulatory 2, in this case rt
-
             x_ = np.zeros ( (ntrials_this_block,1+nconditions) )
             x_[:,0] = 1.
 
@@ -226,86 +179,45 @@ class ColumnData ( history.DataSet ):
 
             z_ = np.zeros ( z.shape )
             r_ = np.zeros ( z.shape )
-
-            if self.modulation: # initialize main and interaction terms as well
-                p_ = np.zeros ( z.shape )
-                p_z = np.zeros ( z.shape )
-                p_r = np.zeros ( z.shape )
-            elif self.doublemodulation: # initialize main and interaction terms for both modulators
-                p_ = np.zeros ( z.shape )
-                p_z = np.zeros ( z.shape )
-                p_r = np.zeros ( z.shape )
-                rt_ = np.zeros ( z.shape )
-                rt_z = np.zeros ( z.shape )
-                rt_r = np.zeros ( z.shape )
-
-            # loop over the nr of lags
             for i in xrange ( len(z) ):
                 z_[i] = history.get_code ( z[i], [-1,1], codes_z )
                 r_[i] = history.get_code ( r[i], [-1,1], codes_r )
 
-                if self.modulation:
-                    p_[i] = pupil[i] # no coding needed, this is a continuous measure
-                    p_z[i] = z_[i]*pupil[i] # interaction per lag
-                    p_r[i] = r_[i]*pupil[i]
-                elif self.doublemodulation:
-                    p_[i] = pupil[i] # no coding needed, this is a continuous measure
-                    p_z[i] = z_[i]*pupil[i] # interaction per lag
-                    p_r[i] = r_[i]*pupil[i]
-                    rt_[i] = reactiontime[i] # no coding needed, this is a continuous measure
-                    rt_z[i] = z_[i]*reactiontime[i] # interaction per lag
-                    rt_r[i] = r_[i]*reactiontime[i]
-
-            # convolve each set of nlag regressors with the exponential history kernels
             hr = history.history_features ( self.h, r_ )
+            # AEU: for stimuli, make history features with 0 coherence 0
             hz = history.history_features_stim ( self.h, z_, d )
 
-            if self.modulation:
-                # main and interaction terms as well
-                hp = history.history_features ( self.h, p_ )
-                hpr = history.history_features ( self.h, p_r )
-                hpz = history.history_features_stim ( self.h, p_z, d )
-            elif self.doublemodulation:
-                # main and interaction terms as well
-                hp = history.history_features ( self.h, p_ )
-                hpr = history.history_features ( self.h, p_r )
-                hpz = history.history_features_stim ( self.h, p_z, d )
-                hrt = history.history_features ( self.h, rt_ )
-                hrtr = history.history_features ( self.h, rt_r )
-                hrtz = history.history_features_stim ( self.h, rt_z, d )
-
-            # now concatenate all columns into a design matrix
+            # append to design matrix
             if not hr is None:
                 x_ = np.c_[x_,hr]
             if not hz is None:
                 x_ = np.c_[x_,hz]
 
-            # append all the interaction regressors
-            if self.modulation:
-                if not hp is None:
-                    x_ = np.c_[x_,hp]
-                if not hpr is None:
-                    x_ = np.c_[x_,hpr]
-                if not hpz is None:
-                    x_ = np.c_[x_,hpz]
-            if self.doublemodulation:
-                if not hp is None:
-                    x_ = np.c_[x_,hp]
-                if not hpr is None:
-                    x_ = np.c_[x_,hpr]
-                if not hpz is None:
-                    x_ = np.c_[x_,hpz]
-                if not hrt is None: # also the RT regressors
-                    x_ = np.c_[x_,hrt]
-                if not hrtr is None:
-                    x_ = np.c_[x_,hrtr]
-                if not hrtz is None:
-                    x_ = np.c_[x_,hrtz]
+            # ------------- modulatory terms ------------- #
+            sz = np.shape(these_data)
+            for m in range(5,sz[1]):
 
-            # how often was the subject correct?
+                p_  = these_data[:,m] # no coding needed, this is a continuous measure
+                p_z = z_*p_  # interaction per lag
+                p_r = r_*p_
+
+                # main and interaction terms as well
+                hp  = history.history_features ( self.h, p_ )
+                hpr = history.history_features ( self.h, p_r )
+                hpz = history.history_features_stim ( self.h, p_z, d )
+
+                # append to design matrix
+                if not hp is None:
+                    x_ = np.c_[x_,hp]
+                if not hpr is None:
+                    x_ = np.c_[x_,hpr]
+                if not hpz is None:
+                    x_ = np.c_[x_,hpz]
+
             correct = z_==r_
             performance = np.mean ( correct )
 
+            # append to design matrix
             y.append ( r )
             x.append ( x_ )
             p.append ( performance+np.zeros ( r.shape ) )

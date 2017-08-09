@@ -276,7 +276,7 @@ def history_features_stim (h, r_or_z, d):
     When the stimulus is 0, make this entry in the design matrix zero as well so that these trials don't
     go into the stimulus weight. See Braun et al. http://www.biorxiv.org/content/early/2017/08/03/172049
     section "Psychometric function fit with history contributions for stimulus and choice"
-    
+
     :Parameters:
         *d* Difficulty of each trial, if 0 there will be no stimulus weight assigned
         *h*
@@ -293,9 +293,9 @@ def history_features_stim (h, r_or_z, d):
         return None
 
     assert len ( h.shape ) == 2, "h should be 2d"
-    r_or_z = np.array ( r_or_z, 'd' )
-    hf = np.zeros ( (len(r_or_z), h.shape[1]), 'd' )
-    n,m = hf.shape
+    r_or_z  = np.array ( r_or_z, 'd' )
+    hf      = np.zeros ( (len(r_or_z), h.shape[1]), 'd' )
+    n,m     = hf.shape
 
     for i in xrange ( m ):
         # when there is no stimulus evidence, also set this history feature to zero

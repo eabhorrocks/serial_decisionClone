@@ -23,7 +23,6 @@ import pylab as pl
 import cPickle,os,sys
 from optparse import OptionParser
 import numpy as np
-import scipy.io # for exporting to matlab
 import copy
 
 # Level of logmessages -- 10 allows for INFO but not for DEBUG
@@ -115,4 +114,4 @@ print results.keys()
 print "nu=",results['model_w_hist'].nu
 
 if opts.matlab:
-    util.results2mat(data, results, opts)
+    util.results2mat(data, results, opts, args[0])
