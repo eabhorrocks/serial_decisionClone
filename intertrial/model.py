@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import threshold,glm
@@ -99,12 +100,14 @@ class history_model ( object ):
         self.applythreshold = kwargs.setdefault ( 'applythreshold', [] )
 
         self.verbose = kwargs.setdefault ( 'verbose', False )
+        self.verbose = False # no output
 
         # # This would allow setting the starting parameters
         w0, p0, nu0 = history_model.__heuristics_for_start ( r, X, self.hf0, self.nafc )
         self.w = np.zeros ( X.shape[1], 'd' )
         w  = kwargs.setdefault ( 'w0', w0 )
-        self.w[:len(w)] = w
+        self.w[:len(w0)] = w0
+
         self.w0 = self.w.copy()
         self.pi = kwargs.setdefault ( 'p0', p0 )
         self.nu = kwargs.setdefault ( 'nu0', nu0 )
@@ -116,7 +119,8 @@ class history_model ( object ):
 
         self.w, self.pi, self.q, self.loglikelihood, self.nu = self.__em ( X, r )
 
-        # self.history_evaluation ( X, r, p=0.75 )
+        # call this to display stimulus-dependent history features
+        self.history_evaluation ( X, r, p=0.75 )
         self.X = X
         self.r = r
 
@@ -350,7 +354,7 @@ class history_model ( object ):
 
     def pcorrect ( self, x, pleft=0.5, pright=0.5, ind=[0,1] ):
         """Get probability of a correct response rather than probability of left/right response
-        
+
         :Parameters:
             *x*         stimulus intensities
             *pleft*     probability that the stimulus is on the left (or number of stimuli on the left)
@@ -377,8 +381,12 @@ class history_model ( object ):
                 probability correct that is considered the border between
                 easy and difficult
         """
-        difficult = performance_filter ( r, X, p, hf0=self.hf0 )
-        easy = np.logical_not ( difficult )
+        difficult, easy = performance_filter ( r, X, p, hf0=self.hf0 )
+        assert np.shape(np.shape(difficult))[0] == 1 , 'difficult is not a vectors'
+        assert np.shape(np.shape(easy))[0] == 1 , 'easy is not a vectors'
+
+        # AEU: get both output args from performance_filter
+        #easy = np.logical_not ( difficult )
 
         X_ = X.copy ()
         for j in self.applythreshold:
@@ -461,6 +469,10 @@ def performance_filter ( r, X, p1=0.75, p0=0.55, hf0=2 ):
     difficult = np.zeros ( X.shape[0], 'bool' )
     easy      = np.zeros ( X.shape[0], 'bool' )
 
+    # here, make sure these are both 1-dimensional
+    assert np.shape(np.shape(difficult))[0] == 1 , 'difficult is not a vectors'
+    assert np.shape(np.shape(easy))[0] == 1 , 'easy is not a vectors'
+
     for c in xrange ( 1, hf0 ):
         for s in stim_levels:
             index = abs(X[:,c])==s
@@ -469,6 +481,10 @@ def performance_filter ( r, X, p1=0.75, p0=0.55, hf0=2 ):
                 easy = np.logical_or ( easy, index )
             elif pcorrect > p0:
                 difficult = np.logical_or ( difficult, index )
+
+    # check again
+    assert np.shape(np.shape(difficult))[0] == 1 , 'difficult is not a vectors'
+    assert np.shape(np.shape(easy))[0] == 1 , 'easy is not a vectors'
 
     return difficult,easy
 

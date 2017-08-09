@@ -1,13 +1,16 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import pylab as pl
 import numpy as np
 import column # Data set specific
 import history,graphics,statistics,model # general
-import sys,cPickle
+import sys,cPickle,os
 from threshold import u_v
-
+import pdb # debugger
+import copy
 import glm
+import scipy.io # for exporting to matlab
 
 __doc__ = """A number of very high level functions
 
@@ -39,25 +42,28 @@ pl.rcParams['font.size'] = 9.
 
 ####################################### Loading data ##############################
 
-def load_data_file ( filename, header=False, detection=True ):
+def load_data_file ( filename, header=False, detection=False):
     """Load data set from file and guess initial values
-    
+
     :Parameters:
         *filename*  name of the data file
         *header*    is the first line a header that should be skipped?
         *detection* are the data detection data? For detection data, we
                     fit a threshold nonlinearity on the stimulus values
+                    AEU: default = False, since I mainly use discrimination data
+        *modulatory* AEU: include the option of having a modulatory term
     """
+
     h = history.history_impulses ()
-    dfile = open ( filename, 'r' )
-    if header:
-        dfile.readline ()
-    cdata = np.fromfile ( dfile, sep=" " ).reshape ( (-1,5) )
+
+    # AEU: read text files in a better way
+    cdata = np.loadtxt(filename)
+
+    # make the design matrix out of this data
     data = column.ColumnData (
-            cdata, impulse_responses=h, threshold=detection, ground_truth=None )
+           cdata, impulse_responses=h, threshold=detection, ground_truth=None)
 
     conditions = np.unique ( cdata[:,1] )
-
     w0 = np.zeros ( len(conditions)+1, 'd' )
     for c in xrange ( len(conditions) ):
         d = np.array ( data.getsummary ( c ) )
@@ -66,8 +72,11 @@ def load_data_file ( filename, header=False, detection=True ):
         w0[1+c] = w[1]
     w0[0] /= len(conditions)
 
+    # AEU: changed colors to make them sequential across sessions
+    color_list = pl.cm.pink(np.linspace(0, 1, len(conditions)))
+    color_list = color_list.tolist() # change to list format
     plotinfo = {
-            'colors': ['r','m','y','c','g','b'],
+            'colors': color_list,
             'labels': ['1','2','3','4','5','6'],
             'conditions': range(len(conditions)),
             'indices': [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]],
@@ -80,7 +89,7 @@ def load_data_file ( filename, header=False, detection=True ):
 
 ############################## analyze data ##############################
 
-def search_for_start ( r, X, w0, applythreshold, hf0, pm=(.85,.93,1.,1.07,1.15), storeopt=False ):
+def search_for_start ( r, X, w0, applythreshold, hf0, pm=(.85,.93,1.,1.07,1.15), storeopt=False):
     """Search for starting values
 
     :Parameters:
@@ -106,11 +115,9 @@ def search_for_start ( r, X, w0, applythreshold, hf0, pm=(.85,.93,1.,1.07,1.15),
             w0=w0,
             lm=0.1, hf0=hf0, emiter=100 )
 
-
     Mwh.w = np.concatenate ( (Mwh.w,np.zeros(6,'d')) )
     Mwh.X = X
-    print "Mwh.w:",Mwh.w
-    print "Mnh.w:",Mnh.w
+
     nhind = 0
     whind = 0
     i = 1
@@ -124,13 +131,14 @@ def search_for_start ( r, X, w0, applythreshold, hf0, pm=(.85,.93,1.,1.07,1.15),
             p0[-1] = 1-p0[0]-p0[1]
 
             M_ = model.history_model ( r, X,
-                    applythreshold=applythreshold,
-                    w0=w0, p0=p0, nu0=M0.nu,
-                    lm=0.1, hf0=hf0, verbose=True, emiter=300, storeopt=storeopt )
+                applythreshold=applythreshold,
+                w0=w0, p0=p0, nu0=M0.nu,
+                lm=0.1, hf0=hf0, verbose=True, emiter=300, storeopt=storeopt )
             if Mwh.loglikelihood < M_.loglikelihood:
                 logging.info ( "  *model chosen for history*" )
                 Mwh = M_
                 whind = i
+
             M_ = model.history_model ( r, X[:,:hf0],
                     applythreshold=applythreshold,
                     w0=w0, p0=p0, nu0=M0.nu,
@@ -140,12 +148,14 @@ def search_for_start ( r, X, w0, applythreshold, hf0, pm=(.85,.93,1.,1.07,1.15),
                 Mnh = M_
                 nhind = i
             i += 1
+
     logging.info ( "Mwh.w = %s\nMnh.w = %s" % (str(Mwh.w),str(Mnh.w)) )
     logging.info ( "Mwh.ll = %g\nMnh.ll = %s" % (Mwh.loglikelihood,Mnh.loglikelihood) )
     logging.info ( "Starting values:\n  with history: %d\n  without history: %d\n" % (whind,nhind) )
 
+    print "X",np.shape(X)
+    print "Mwh",Mwh.w,np.shape(Mwh.X)
     return Mnh,Mwh
-
 
 def analysis ( d, w0, nsamples=200, perm_collector=statistics.EvaluationCollector ):
     """Analyze a dataset
@@ -170,6 +180,7 @@ def analysis ( d, w0, nsamples=200, perm_collector=statistics.EvaluationCollecto
     >>> results.keys()
     ['model_nohist', 'model_w_hist', 'bootstrap', 'permutation_nh', 'permutation_wh']
     """
+
     if d.__dict__.has_key ( 'detection' ) and d.detection:
         dnh = d.__class__ ( d.fname, threshold=len(d.th_features)>0 )
     else:
@@ -264,6 +275,9 @@ def plot ( d, results, infodict ):
     kernelplot ( d, results, infodict, ax.history_rz, ax.history_perf )
     slopeplot ( d, results, infodict, ax.slopes )
 
+    # AEU: add an extra row of plots with the modulatory pupil weights
+
+
 ############################## high level plotting routines -- called internally by plot()
 
 def pmfplot ( d, results, infodict, ax, errors=True ):
@@ -282,6 +296,7 @@ def pmfplot ( d, results, infodict, ax, errors=True ):
             graphics.plot_data_summary ( d_, ax,
                 infodict['colors'][i], infodict['labels'][i] )
         else:
+            # AEU: change the marker to make datapoints small. What goes wrong in the plot here?
             ax.plot ( d_[:,0], d_[:,1] / d_[:,2], '.', color=infodict['colors'][i], label=infodict['labels'][i] )
 
         # wfit  = results['model_w_hist'].w[infodict['indices'][c]]
@@ -296,7 +311,7 @@ def pmfplot ( d, results, infodict, ax, errors=True ):
             gt = graphics.plot_pmf ( pgfit, wgfit, x, ax,
                     (np.array([255,240,240],'d')/255+infodict['colors'][i])/2. )
             pl.setp (gt, linestyle='--' )
- 
+
         # graphics.plot_pmf ( pfit, w0fit, x, ax, [.9,.9,.9], alpha=0.1 )
         graphics.plot_pmf ( p0fit, wfit,  x, ax, infodict['colors'][i] )
     graphics.label_axes (
@@ -401,6 +416,58 @@ def kernelplot ( d, results, infodict, ax1, ax2, legend='lower right' ):
 
     return kl
 
+def kernelplot_Mod ( d, results, infodict, ax1, ax2, ax3, legend='lower right' ):
+    """Plot historykernels"""
+    M = results['model_w_hist']
+    bootstrap = results['bootstrap']
+
+    C = statistics.Kernel_and_Slope_Collector ( d.h, d.hf0, range(1,d.hf0) )
+    K = C(M)
+    print 'K', K
+    print d.hf0
+    print 'd.h.shape[0]', d.h.shape[0]
+
+    print 'adding modulation kernels'
+    hr = K[:d.h.shape[0]]
+    hz = K[d.h.shape[0]:2*d.h.shape[0]]
+    hr_pupil = K[2*d.h.shape[0]:3*d.h.shape[0]]
+    hz_pupil = K[3*d.h.shape[0]:-2]
+    hr_pupil *= K[-2]
+    hz_pupil *= K[-2]
+
+    if bootstrap is None:
+        kernellen = (bootstrap.shape[1]-2)/2
+        print kernellen
+        al = bootstrap[:,-2]
+        al.shape = (-1,1)
+        bootstrap[:,:-2] *= al # Like that?
+        print K[-2],pl.prctile(bootstrap[:,-2]),pl.mean(bootstrap[:,-2])
+
+        hci = statistics.history_kernel_ci (
+                bootstrap[:,kernellen:-2], bootstrap[:,:kernellen],
+                hz, hr )
+    else:
+        hci = None
+
+    kl = graphics.history_kernels ( hz, hr, hci, ax1,   "left/right", ground_truth = d.ground_truth )
+    kl += graphics.history_kernels ( hz, hr, hci, ax2, "correct/incorrect", ground_truth = d.ground_truth )
+
+    labely,labelh = same_y ( ax1, ax2 )
+
+    graphics.label_axes ( title="(D) stimulus and response kernels",
+            xlabel="lag",
+            ylabel="equivalent stimulus strength",
+            legend=legend,
+            ax=ax1 )
+    graphics.label_axes ( title="(E) correct and incorrect kernels",
+            xlabel="lag",
+            ylabel="equivalent stimulus strength",
+            legend=legend,
+            ax=ax2 )
+    # pl.setp ( (ax1,ax2), ylim=(-6,6) )
+
+    return kl
+
 def slopeplot ( d, results, infodict, ax ):
     """slope results of the permutation test"""
 
@@ -431,3 +498,41 @@ def same_y ( *axes ):
     for ax in axes:
         ax.set_ylim ( -yl, yl )
     return -.8*yl,.1*yl
+
+def results2mat(data, results, opts, filename):
+    # write away the data and results to a matlab file for easier plotting
+    logging.info ( "Writing data to mat file" )
+    datadict = copy.copy(data)
+    datadict = datadict.__dict__
+
+    # remove fields that scipy io cant handle
+    unwanted = [None]
+    unwanted_keys = [k for k, v in datadict.items() if any([v is i for i in unwanted])]
+    for k in unwanted_keys: del datadict[k]
+    del datadict['rng'] # scipy cant handle this either
+
+    # scipy will only save arrays that are in the dict, so convert the keys that are columndata
+    datadict['p'] = datadict.pop('_ColumnData__p')
+    datadict['data'] = datadict.pop('_ColumnData__data')
+    datadict['blocks'] = datadict.pop('_ColumnData__blocks')
+    datadict['X'] = datadict.pop('_ColumnData__X')
+    datadict['fname'] = datadict.pop('_DataSet__fname')
+    datadict['th_features'] = datadict.pop('_ColumnData__th_features')
+    datadict['r'] = datadict.pop('_ColumnData__r')
+    datadict['conditions'] = datadict.pop('_ColumnData__conditions')
+
+    print(datadict.keys())
+    results_file = os.path.join ( opts.data_path, os.path.basename(filename)+"data.mat" )
+    scipy.io.savemat(results_file, datadict)
+
+    # write away the data and results to a matlab file for easier plotting
+    logging.info ( "Writing results to mat file" )
+
+    # remove fields that scipy io cant handle
+    unwanted = [None]
+    unwanted_keys = [k for k, v in results.items() if any([v is i for i in unwanted])]
+    for k in unwanted_keys: del results[k]
+
+    # save
+    results_file = os.path.join ( opts.data_path, os.path.basename(filename)+"results.mat" )
+    scipy.io.savemat(results_file, results)

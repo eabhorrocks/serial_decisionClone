@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 __doc__ = """
 Copyright (C) 2014 Ingo Fründ
@@ -21,13 +22,14 @@ from intertrial import util,column
 import pylab as pl
 import cPickle,os,sys
 from optparse import OptionParser
+import numpy as np
+import copy
 
 # Level of logmessages -- 10 allows for INFO but not for DEBUG
 #                         20 will suppress INFO
 import logging
 logging.root.level = 10
 logging.BASIC_FORMAT = '%(message)s'
-
 
 ############################## Parsing command line
 
@@ -54,7 +56,7 @@ parser.add_option ( "-s", "--silent",
         action="store_true",
         help="Silent mode -- don't show any status messages" )
 parser.add_option ( "-n", "--number-of-samples",
-        default=2000,
+        default=1000,
         type="int",
         help="number of samples for monte carlo procedures" )
 parser.add_option ( "-r", "--hide-results",
@@ -63,12 +65,18 @@ parser.add_option ( "-r", "--hide-results",
 parser.add_option ( "-g", "--graphics-path",
         default="figures",
         help="path where the graphical output should be stored" )
+parser.add_option ( "-p", "--data-path",
+        default=os.path.join(os.getcwd(), "serialmodel"),
+        help="path where the data output should be stored" )
 parser.add_option ( "-t", "--detection",
         action="store_true",
         help="detection experiment: fit the threshold nonlinearity" )
 parser.add_option ( "-e", "--header",
         action="store_true",
         help="Does the data file contain a header? If you choose this option, the header will be ignored!" )
+parser.add_option ( "-m", "--matlab",
+        action="store_true",
+        help="Save files to Matlab" )
 
 opts,args = parser.parse_args ()
 
@@ -77,24 +85,25 @@ if opts.silent:
     logging.root.level = 200
 
 ############################## Loading data
-data,w0,plotinfo = util.load_data_file ( args[0], header=opts.header, detection=opts.detection )
+
+data,w0,plotinfo = util.load_data_file ( args[0], header=opts.header, detection=opts.detection)
 
 # Check for directories
-if not os.path.exists ( "sim_backup" ):
-    os.mkdir ( "sim_backup" )
-
-if not os.path.exists ( opts.graphics_path ):
-    os.mkdir ( opts.graphics_path )
+if not os.path.exists (opts.data_path):
+    os.mkdir (opts.data_path)
 
 ############################## analyze data or read backup file
-backup_file = os.path.join ( "sim_backup",os.path.basename(args[0])+".pcl" )
+
+logging.info ( "Searching for backup" )
+backup_file = os.path.join ( opts.data_path, os.path.basename(args[0])+".pcl" )
+
 if os.path.exists ( backup_file ) and not opts.force:
     logging.info ( "Loading simulation results from %s" % (backup_file,) )
     results = cPickle.load ( open ( backup_file, 'r' ) )
     logging.info ( "Read data from %d permutations and %d bootstrap repetitions" % \
             (results['permutation_wh'].shape[0],results['bootstrap'].shape[0]) )
 else:
-    logging.info ( "Analyzing data" )
+    logging.info ( "No backup found, analyzing data" )
     results = util.analysis ( data, w0, opts.number_of_samples )
     print results['model_nohist'].pi
 
@@ -104,11 +113,5 @@ else:
 print results.keys()
 print "nu=",results['model_w_hist'].nu
 
-# plot
-util.plot ( data, results, plotinfo )
-
-# store figure
-pl.savefig ( os.path.join ( opts.graphics_path, os.path.basename(args[0])+".pdf" ) )
-
-if not opts.hide_results:
-    pl.show()
+if opts.matlab:
+    util.results2mat(data, results, opts, args[0])

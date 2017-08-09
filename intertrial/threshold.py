@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import scipy.optimize as opt
@@ -116,7 +117,7 @@ def psi_py ( X, w, nu, applythreshold ):
 
 # psi is clearly a bottleneck in profiling the code.
 # it is highly recommended to use the weave based evaluation of psi
-psi = psi_weave
+psi = psi_py
 
 def dpsidnu ( gxw, w, dudnu_ ):
     """derivative of psi with respect to nu"""
@@ -147,4 +148,3 @@ def optimize_nu ( X, y, q, w, nu0, applythreshold=[1], niter=10, stop=1e-5, long
         return - L ( gxw, y, q )
     nu_out = opt.fmin ( error, float ( nu0 ), disp=0 )
     return nu_out
-

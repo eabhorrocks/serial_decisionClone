@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import pylab as pl
 import numpy as np
 from matplotlib.patches import Arc
 from matplotlib.ticker import MaxNLocator
+from matplotlib import gridspec
 from scipy import stats
 
 __doc__ = """Graphics commands that allow generating all plots in the canonical figure
@@ -40,12 +42,17 @@ class canonical_axes:
     def __init__ ( self, fig, bbox=(0,0,1,1) ):
         """Determine the general layout of the axes"""
         x0,y0,w,h = bbox
-        self.pmf               = fig.add_axes ( (x0+0.10*w, y0+0.60*h, 0.25*w, 0.3*h) )
-        self.uv                = fig.add_axes ( (x0+0.46*w, y0+0.60*h, 0.20*w, 0.3*h) )
-        self.likeli            = fig.add_axes ( (x0+0.77*w, y0+0.60*h, 0.20*w, 0.3*h) )
-        self.history_rz        = fig.add_axes ( (x0+0.10*w, y0+0.15*h, 0.25*w, 0.3*h) )
-        self.history_perf      = fig.add_axes ( (x0+0.46*w, y0+0.15*h, 0.20*w, 0.3*h) )
-        self.slopes            = fig.add_axes ( (x0+0.77*w, y0+0.15*h, 0.20*w, 0.3*h) )
+        gs = gridspec.GridSpec(3, 3)
+        self.pmf               = fig.add_subplot(gs[0,0])
+        self.uv                = fig.add_subplot(gs[0,1])
+        self.likeli            = fig.add_subplot(gs[0,2])
+        self.history_rz        = fig.add_subplot(gs[1,0])
+        self.history_perf      = fig.add_subplot(gs[1,1])
+        self.slopes            = fig.add_subplot(gs[1,2])
+        self.history_rzP       = fig.add_subplot(gs[2,0])
+        self.history_perfP     = fig.add_subplot(gs[2,1])
+        self.history_pupil     = fig.add_subplot(gs[2,2])
+
 
 def prepare_axes ( ax, haveon=("bottom","left" ) ):
     """Prepare an axes object to look nicer than standard matplotlib
@@ -337,7 +344,7 @@ def plot_pmf ( pi, dlal, x=None, ax=None, color='k', alpha=1. ):
 
 def plot_nonlinearity_summary ( data, w, pi, ax=None, color='k', label="" ):
     """Plot a data summary after inverting it through the psychometric function
-    
+
     :Example:
     >>> import monkey
     >>> d = pl.array ( zip ( [-2.,-1.,0.,1.,2.],[1,4,10,16,20],[20]*5 ) )

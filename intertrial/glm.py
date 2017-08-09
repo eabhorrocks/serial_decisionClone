@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 __doc__ = """GLM fitting with weighted data points
 
@@ -82,4 +83,3 @@ def weighted_glm ( X, y, q, w, niter=5, stop=1e-5, lm=0.1 ):
         conv = 1.
 
     return w,l_,conv
-

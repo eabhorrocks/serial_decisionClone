@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 __doc__ = """
 
@@ -22,7 +23,7 @@ import history
 import numpy as np
 
 class ColumnData ( history.DataSet ):
-    def __init__ ( self, data, impulse_responses=None, threshold=False, ground_truth=None ):
+    def __init__ ( self, data, impulse_responses=None, threshold=False, ground_truth=None):
         """A data set consisting of multiple columns of data
 
         :Parameters:
@@ -31,6 +32,7 @@ class ColumnData ( history.DataSet ):
                 block should be positive integers, condition, should be positive
                 integers, stimulus should be positive, target should have values of
                 0 and 1, response should have values of 0 and 1.
+                AEU: data can contain a 6th and 7th column, indicating modulatory terms
             *impulse_responses*
                 an array with the impulse responses of the history filters in the
                 columns. Such an array is most easily constructed using the function
@@ -108,14 +110,18 @@ class ColumnData ( history.DataSet ):
         return self.__r
 
     def permutation ( self ):
-        """Return a blockwise permutation of the original dataset"""
+
+        """Return a conditionwise permutation of the original dataset"""
         data = self.__data.copy()
-        for block in self.__blocks:
-            block_index = self.__data[:,0] == block
-            these_data  = self.__data[block_index,:]
-            np.random.shuffle ( these_data )
-            data[block_index,:] = these_data
-        C = ColumnData ( data, self.h, self.__threshold )
+        for condition in self.__conditions:
+            cond_idx = data[:,1] == condition
+            these_data = data[cond_idx,1:] # get the data within a session, leave blocknrs intact
+            np.random.shuffle(these_data)
+            data[cond_idx,1:] = these_data
+
+        # after shuffling all trials within a block, recompute the designM
+        C = ColumnData ( data, self.h, self.__threshold, ground_truth=None)
+
         return C.r,C.X
 
     @property
@@ -162,6 +168,7 @@ class ColumnData ( history.DataSet ):
 
             z = these_data[:,3]
             r = these_data[:,4]
+            d = these_data[:,2] # coherence levels
             x_ = np.zeros ( (ntrials_this_block,1+nconditions) )
             x_[:,0] = 1.
 
@@ -177,15 +184,40 @@ class ColumnData ( history.DataSet ):
                 r_[i] = history.get_code ( r[i], [-1,1], codes_r )
 
             hr = history.history_features ( self.h, r_ )
-            hz = history.history_features ( self.h, z_ )
+            # AEU: for stimuli, make history features with 0 coherence 0
+            hz = history.history_features_stim ( self.h, z_, d )
+
+            # append to design matrix
             if not hr is None:
                 x_ = np.c_[x_,hr]
             if not hz is None:
                 x_ = np.c_[x_,hz]
 
+            # ------------- modulatory terms ------------- #
+            sz = np.shape(these_data)
+            for m in range(5,sz[1]):
+
+                p_  = these_data[:,m] # no coding needed, this is a continuous measure
+                p_z = z_*p_  # interaction per lag
+                p_r = r_*p_
+
+                # main and interaction terms as well
+                hp  = history.history_features ( self.h, p_ )
+                hpr = history.history_features ( self.h, p_r )
+                hpz = history.history_features_stim ( self.h, p_z, d )
+
+                # append to design matrix
+                if not hp is None:
+                    x_ = np.c_[x_,hp]
+                if not hpr is None:
+                    x_ = np.c_[x_,hpr]
+                if not hpz is None:
+                    x_ = np.c_[x_,hpz]
+
             correct = z_==r_
             performance = np.mean ( correct )
 
+            # append to design matrix
             y.append ( r )
             x.append ( x_ )
             p.append ( performance+np.zeros ( r.shape ) )

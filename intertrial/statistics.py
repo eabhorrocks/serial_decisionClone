@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import scipy.optimize as opt
@@ -119,7 +120,7 @@ def Likelihood_and_Slope_Collector (fitted_model):
     """Collect likelihood and slope
 
     The output will be (loglikelihood,w(stimulus),slope_of_the_full_model_at_inflection)
-    
+
     This assumes that the first two columns of the design matrix refer to the constant term and a term
     corresponding to the stimulus level
 
@@ -169,8 +170,8 @@ class EvaluationCollector ( object ):
         # out.append ( fitted_model.w[1:self.hf0] ) # 12,...,12+hf0
         out.append ( self.get_thres ( fitted_model.w[:self.hf0], fitted_model.nu, fitted_model.pi, .75 ) ) # 12,...,12+hf0
         out.append ( self.get_thres ( fitted_model.w[:self.hf0], fitted_model.nu, fitted_model.pi, .85 ) ) # 12+hf0,...,12+2*hf0
-        out.append ( fitted_model.nu ) # 
-        out.append ( fitted_model.w ) # 
+        out.append ( fitted_model.nu ) #
+        out.append ( fitted_model.w ) #
         out.append ( np.ravel ( self.stimuli ) )
         out.append ( np.ravel ( self.conditions ) )
         out.append ( np.ravel ( self.variance_explained ) )
@@ -250,7 +251,7 @@ class EvaluationCollector ( object ):
 
 #################### The real monte carlo stuff ####################
 
-def mcsimulation ( generator, collector, nsamples, w0, p0, nu0=0., verbose=False, hf0=2, applythreshold=[] ): 
+def mcsimulation ( generator, collector, nsamples, w0, p0, nu0=0., verbose=False, hf0=2, applythreshold=[] ):
     """run a monte carlo simulation
 
     :Parameters:
@@ -287,6 +288,9 @@ def mcsimulation ( generator, collector, nsamples, w0, p0, nu0=0., verbose=False
     collected_output = []
     for i in xrange ( nsamples ):
         r, X = generator ()
+        # print(np.shape(r))
+        # print(np.shape(X))
+
         M = model.history_model ( r, X, w0=w0, p0=p0, nu0=nu0, hf0=hf0,
                 applythreshold=applythreshold, emiter=80 )
         collected_output.append ( collector(M) )
