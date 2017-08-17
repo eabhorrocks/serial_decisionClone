@@ -32,11 +32,9 @@ In addition to showing that history biases are adaptable, they used simulations 
 We were excited to see this, because our theoretical results on the relationship between history bias and drop in sensitivity precisely capture (and, indeed, predict) their results-- 
 see my [notebook](https://bitbucket.org/mackelab/serial_decision/src/c0987ae8044ecd8e57a412eb6765ff14af3c55b5/theory_AGC/SerialDepContour.ipynb?at=master) for full details:
 
-Simulation results by Abrahamyan et al: 
-![Figure4b_Abrhamhyan_etal](theory_AGC/Figure4b_Abrhamhyan_etal_2.gif)
 
-Our theoretical predictions:
-![DropInSensitivity_Predicted.png](theory_AGC/DropInSensitivity_Predicted.png)
+![Comparison](theory_AGC/Comparison.png)
+
 
 
 
