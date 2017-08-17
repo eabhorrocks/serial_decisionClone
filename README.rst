@@ -1,4 +1,4 @@
-## A python-toolbox for modelling inter-trial dependencies in psychophysical data
+## A python-toolbox for modelling inter-trial dependencies in psychophysical data ##
 
 ** More information at www.mackelab.org/code **
 
@@ -18,13 +18,13 @@ This code reproduces the analyses in the paper
     
 Copyright (C) 2014 Ingo Fründ
 
-## Updated by Anke Braun and Anne Urai, 2017
+## Updated by Anke Braun and Anne Urai, 2017: Additional functionality ##
 
 The code as originally provided by Fründ et al  is adapted to allow for a modulatory term, that on a trial-by-trial basis interacts with experimental history.
 When the data file contains a sixth column, this will be taken as a modulation factor (e.g. pupil) and multiplied with response and stimulus history at every lag.
 Figures display both the main history kernels and the interaction kernels.
 
-## Updated by Jakob Macke, 2016
+## Updated by Jakob Macke, 2016: Additional theory on Abrhamyana et al ##
 
 Abrahamyana et al recently published an article on  ``Adaptable history biases in human perceptual decisions''
 
