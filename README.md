@@ -30,7 +30,7 @@ Abrahamyana et al recently published an article on  ``Adaptable history biases i
 
 In addition to showing that history biases are adaptable, they used simulations to relate the strength of history bias to the resulting drop in visual sensitivity. 
 We were excited to see this, because our theoretical results on the relationship between history bias and drop in sensitivity precisely capture (and, indeed, predict) their results-- 
-see my [notebook](https://bitbucket.org/mackelab/serial_decision/src/c0987ae8044ecd8e57a412eb6765ff14af3c55b5/theory_AGC/SerialDepContour.ipynb?at=master), or the [wiki-page](AbrahamyanTheory) in which I explore these questions.
+see my [notebook](https://bitbucket.org/mackelab/serial_decision/src/c0987ae8044ecd8e57a412eb6765ff14af3c55b5/theory_AGC/SerialDepContour.ipynb?at=master), or the [wiki-page](https://bitbucket.org/mackelab/serial_decision/wiki/Additional_Theory) in which I explore these questions.
 
 
 
