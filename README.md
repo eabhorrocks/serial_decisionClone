@@ -1,4 +1,4 @@
-## A python-toolbox for modelling inter-trial dependencies in psychophysical data ##
+# A python-toolbox for modelling inter-trial dependencies in psychophysical data ##
 
 ** More information at www.mackelab.org/code **
 
